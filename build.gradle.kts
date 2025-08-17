@@ -1,14 +1,12 @@
 plugins {
     java
-    id("org.springframework.boot") version "3.5.4"
-    id("io.spring.dependency-management") version "1.1.7"
-    id("org.hibernate.orm") version "6.6.22.Final"
-    id("org.graalvm.buildtools.native") version "0.10.6"
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
 
 group = "com.pos"
 version = "0.0.1-SNAPSHOT"
-description = "MVP PoS project for Spring Boot"
+description = "PoS project for Spring Boot"
 
 java {
     toolchain {
@@ -18,7 +16,7 @@ java {
 
 configurations {
     compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
+        extendsFrom(annotationProcessor)
     }
 }
 
@@ -26,50 +24,33 @@ repositories {
     mavenCentral()
 }
 
-extra["springShellVersion"] = "3.4.1"
-
 dependencies {
     // Web & API Layer
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-rest")
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.rest)
+    implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.thymeleaf)
 
     // Data Layer
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation(libs.spring.boot.starter.data.jpa)
+    runtimeOnly(libs.h2)
 
     // Security
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    testImplementation("org.springframework.security:spring-security-test")
-
-    // Command Line Interface (Optional)
-    implementation("org.springframework.shell:spring-shell-starter")
-    testImplementation("org.springframework.shell:spring-shell-starter-test")
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.thymeleaf.extras.springsecurity6)
+    testImplementation(libs.spring.security.test)
     
     // Developer Tools
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-
-    // MapStruct for DTO mapping
-    implementation("org.mapstruct:mapstruct:1.5.5.Final")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    developmentOnly(libs.spring.boot.devtools)
+    developmentOnly(libs.spring.boot.docker.compose)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    annotationProcessor(libs.spring.boot.configuration.processor)
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
 
     // Testing
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.shell:spring-shell-dependencies:${property("springShellVersion")}")
-    }
-}
-
-hibernate {
-    enhancement {
-        enableAssociationManagement = true
-    }
+    testImplementation(libs.spring.boot.starter.test)
 }
 
 tasks.withType<Test> {
