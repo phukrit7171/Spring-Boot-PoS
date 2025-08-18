@@ -1,1 +1,5 @@
-rootProject.name = "phukrit"
+rootProject.name = "com"
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
