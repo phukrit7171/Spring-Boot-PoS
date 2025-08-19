@@ -4,7 +4,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 
     // Great for build-time bytecode enhancement for better JPA performance.
-    id("org.hibernate.orm") version "7.1.0.Final"
     id("io.freefair.lombok") version "8.14.2"
 }
 
@@ -64,11 +63,4 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
 
-}
-
-hibernate {
-    enhancement {
-        // Optimizes JPA entity performance by enhancing bytecode at build time.
-        enableAssociationManagement = true
-    }
 }
