@@ -1,13 +1,14 @@
 package com.pos.phukrit.controllers;
 
+import com.pos.phukrit.exceptions.ResourceNotFoundException;
 import com.pos.phukrit.models.Product;
 import com.pos.phukrit.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
@@ -24,8 +25,9 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        Optional<Product> product = productService.getProductById(id);
-        return product.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        Product product = productService.getProductById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        return ResponseEntity.ok(product);
     }
 
     @GetMapping("/category/{categoryId}")
@@ -41,15 +43,16 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
         Product createdProduct = productService.createProduct(product);
         return ResponseEntity.ok(createdProduct);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
-        Optional<Product> updatedProduct = productService.updateProduct(id, productDetails);
-        return updatedProduct.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
+        Product updatedProduct = productService.updateProduct(id, productDetails)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/{id}")
@@ -58,7 +61,7 @@ public class ProductController {
         if (deleted) {
             return ResponseEntity.noContent().build();
         } else {
-            return ResponseEntity.notFound().build();
+            throw new ResourceNotFoundException("Product not found with id: " + id);
         }
     }
 }

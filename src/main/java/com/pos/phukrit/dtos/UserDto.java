@@ -4,13 +4,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
+import com.pos.phukrit.models.UserRole;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 public class UserDto {
-    // Assuming UserDto will have fields like id, name, email, etc.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,8 +20,14 @@ public class UserDto {
 
     @NotNull
     private String username;
+
+    @NotNull
+    @Email(message = "Email should be valid")
+    private String email;
+
     @NotNull
     private String password; // Consider hashing this in the service layer
+
     @NotNull
-    private String role; // e.g., ADMIN, STAFF, CUSTOMER
+    private UserRole role; // Use enum type for role
 }

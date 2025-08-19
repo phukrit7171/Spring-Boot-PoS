@@ -1,7 +1,6 @@
 package com.pos.phukrit.controllers;
 
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,25 +27,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pos.phukrit.models.Product;
-import com.pos.phukrit.services.CategoryService;
-import com.pos.phukrit.services.OrderService;
-import com.pos.phukrit.services.ProductService;
+import com.pos.phukrit.models.UserModel;
+import com.pos.phukrit.models.UserRole;
 import com.pos.phukrit.services.UserService;
 
 @WebMvcTest(
-    controllers = ProductController.class,
+    controllers = UserController.class,
     excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class},
     excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
+        ProductController.class,
         CategoryController.class,
         OrderController.class,
-        UserController.class,
         AuthController.class
     })
 )
 @AutoConfigureMockMvc(addFilters = false)
 @Import({})
-class ProductControllerTest {
+class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -55,7 +52,7 @@ class ProductControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private ProductService productService;
+    private UserService userService;
 
     @MockBean
     private com.pos.phukrit.config.CustomUserDetailsService customUserDetailsService;
@@ -64,85 +61,75 @@ class ProductControllerTest {
     private org.springframework.security.authentication.AuthenticationManager authenticationManager;
 
     @MockBean
-    private UserService userService;
-
-    @MockBean
-    private CategoryService categoryService;
-
-    @MockBean
-    private OrderService orderService;
-
-    // Prevent other controllers from being created by the MVC slice
+    private ProductController productController;
     @MockBean
     private CategoryController categoryController;
     @MockBean
     private OrderController orderController;
-    @MockBean
-    private UserController userController;
     @MockBean
     private AuthController authController;
 
     
 
     @Test
-    void getAllProducts_returnsList() throws Exception {
-        Product p1 = new Product();
-        setField(p1, "id", 1L);
-        setField(p1, "name", "A");
-        Product p2 = new Product();
-        setField(p2, "id", 2L);
-        setField(p2, "name", "B");
-        when(productService.getAllProducts()).thenReturn(List.of(p1, p2));
+    void getAllUsers_returnsList() throws Exception {
+        UserModel u1 = new UserModel();
+        setField(u1, "id", 1L);
+        setField(u1, "name", "User One");
+        setField(u1, "username", "user1");
+        setField(u1, "email", "user1@example.com");
+        setField(u1, "role", UserRole.CUSTOMER);
+        UserModel u2 = new UserModel();
+        setField(u2, "id", 2L);
+        setField(u2, "name", "User Two");
+        setField(u2, "username", "user2");
+        setField(u2, "email", "user2@example.com");
+        setField(u2, "role", UserRole.STAFF);
+        when(userService.getAllUsers()).thenReturn(List.of(u1, u2));
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/users"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(1L))
             .andExpect(jsonPath("$[1].id").value(2L));
     }
 
     @Test
-    void getProductById_foundOrNotFound() throws Exception {
-        Product p = new Product();
-        setField(p, "id", 10L);
-        setField(p, "name", "X");
-        when(productService.getProductById(10L)).thenReturn(Optional.of(p));
-        when(productService.getProductById(11L)).thenReturn(Optional.empty());
+    void getUserById_foundOrNotFound() throws Exception {
+        UserModel u = new UserModel();
+        setField(u, "id", 10L);
+        setField(u, "name", "User Ten");
+        setField(u, "username", "user10");
+        setField(u, "email", "user10@example.com");
+        setField(u, "role", UserRole.ADMIN);
+        when(userService.getUserById(10L)).thenReturn(Optional.of(u));
+        when(userService.getUserById(11L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/products/10"))
+        mockMvc.perform(get("/api/users/10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(10L));
 
-        mockMvc.perform(get("/api/products/11"))
+        mockMvc.perform(get("/api/users/11"))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    void getByCategory_and_search() throws Exception {
-        when(productService.getProductsByCategory(5L)).thenReturn(List.of(new Product()));
-        when(productService.searchProductsByName("tea")).thenReturn(List.of(new Product(), new Product()));
+    void createUser_returnsCreated() throws Exception {
+        UserModel payload = new UserModel();
+        setField(payload, "name", "New User");
+        setField(payload, "username", "newuser");
+        setField(payload, "email", "newuser@example.com");
+        setField(payload, "password", "password");
+        setField(payload, "role", UserRole.CUSTOMER);
 
-        mockMvc.perform(get("/api/products/category/5"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0]").exists());
-
-        mockMvc.perform(get("/api/products/search").param("name", "tea"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0]").exists());
-    }
-
-    @Test
-    void createProduct_returnsCreated() throws Exception {
-        Product payload = new Product();
-        setField(payload, "name", "New");
-        setField(payload, "price", new BigDecimal("9.99"));
-        setField(payload, "stockQuantity", 10);
-
-        Product created = new Product();
+        UserModel created = new UserModel();
         setField(created, "id", 3L);
-        setField(created, "name", "New");
-        when(productService.createProduct(any(Product.class))).thenReturn(created);
+        setField(created, "name", "New User");
+        setField(created, "username", "newuser");
+        setField(created, "email", "newuser@example.com");
+        setField(created, "role", UserRole.CUSTOMER);
+        when(userService.createUser(any(UserModel.class))).thenReturn(created);
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isOk())
@@ -150,34 +137,37 @@ class ProductControllerTest {
     }
 
     @Test
-    void updateAndDelete_product() throws Exception {
-        Product details = new Product();
-        setField(details, "name", "Updated");
-        setField(details, "price", new BigDecimal("19.99"));
-        setField(details, "stockQuantity", 5);
-        Product updated = new Product();
+    void updateAndDelete_user() throws Exception {
+        UserModel details = new UserModel();
+        setField(details, "name", "Updated User");
+        setField(details, "username", "updateduser");
+        setField(details, "email", "updateduser@example.com");
+        UserModel updated = new UserModel();
         setField(updated, "id", 4L);
-        setField(updated, "name", "Updated");
-        when(productService.updateProduct(eq(4L), any(Product.class))).thenReturn(Optional.of(updated));
-        when(productService.updateProduct(eq(6L), any(Product.class))).thenReturn(Optional.empty());
-        when(productService.deleteProduct(4L)).thenReturn(true);
-        when(productService.deleteProduct(6L)).thenReturn(false);
+        setField(updated, "name", "Updated User");
+        setField(updated, "username", "updateduser");
+        setField(updated, "email", "updateduser@example.com");
+        setField(updated, "role", UserRole.CUSTOMER);
+        when(userService.updateUser(eq(4L), any(UserModel.class))).thenReturn(Optional.of(updated));
+        when(userService.updateUser(eq(6L), any(UserModel.class))).thenReturn(Optional.empty());
+        when(userService.deleteUser(4L)).thenReturn(true);
+        when(userService.deleteUser(6L)).thenReturn(false);
 
-        mockMvc.perform(put("/api/products/4")
+        mockMvc.perform(put("/api/users/4")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(details)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(4L))
-            .andExpect(jsonPath("$.name").value("Updated"));
+            .andExpect(jsonPath("$.name").value("Updated User"));
 
-        mockMvc.perform(put("/api/products/6")
+        mockMvc.perform(put("/api/users/6")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(details)))
             .andExpect(status().isNotFound());
 
-        mockMvc.perform(delete("/api/products/4"))
+        mockMvc.perform(delete("/api/users/4"))
             .andExpect(status().isNoContent());
-        mockMvc.perform(delete("/api/products/6"))
+        mockMvc.perform(delete("/api/users/6"))
             .andExpect(status().isNotFound());
     }
     

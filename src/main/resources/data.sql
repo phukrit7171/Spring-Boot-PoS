@@ -15,7 +15,7 @@ INSERT INTO products (name, description, price, stock_quantity, category_id) VAL
 ('Cookware Set', 'Complete cookware set for your kitchen', 149.99, 25, 4);
 
 -- Insert sample users
-INSERT INTO users (name, username, password, role) VALUES 
-('Admin User', 'admin', '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', 'ADMIN'),
-('Staff User', 'staff', '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', 'STAFF'),
-('Customer User', 'customer', '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', 'CUSTOMER');
+INSERT INTO users (name, username, email, password, role) VALUES
+('Admin User', 'admin', 'admin@example.com', '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', 'ADMIN'),
+('Staff User', 'staff', 'staff@example.com', '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', 'STAFF'),
+('Customer User', 'customer', 'customer@example.com', '$2a$10$8K1p/a0dhrxiowP.dnkgNORTWgdEDHn5L2/xjpEWuC.QQv4rKO9jO', 'CUSTOMER');

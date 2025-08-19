@@ -45,15 +45,22 @@ class OrderServiceTest {
     void createOrder_setsDefaults_calculatesTotal_andSetsBackReference() {
         Order order = new Order();
         OrderItem i1 = new OrderItem();
+        i1.setQuantity(2);
+        i1.setUnitPrice(new BigDecimal("6.25"));
         i1.setTotalPrice(new BigDecimal("12.50"));
         OrderItem i2 = new OrderItem();
+        i2.setQuantity(1);
+        i2.setUnitPrice(new BigDecimal("7.50"));
         i2.setTotalPrice(new BigDecimal("7.50"));
-        order.setOrderItems(List.of(i1, i2));
-
+        
+        // Set the order items properly
+        order.getOrderItems().add(i1);
+        order.getOrderItems().add(i2);
+    
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
-
+    
         Order saved = orderService.createOrder(order);
-
+    
         assertThat(saved.getOrderDate()).isNotNull();
         assertThat(saved.getStatus()).isEqualTo(OrderStatus.PENDING);
         assertThat(saved.getTotalAmount()).isEqualByComparingTo(new BigDecimal("20.00"));

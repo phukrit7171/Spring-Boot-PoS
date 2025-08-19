@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
+import com.pos.phukrit.dtos.UserResponse;
 import com.pos.phukrit.models.UserModel;
 import com.pos.phukrit.services.UserService;
 
@@ -69,9 +70,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserModel> register(@Valid @RequestBody UserModel user) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody UserModel user) {
         UserModel createdUser = userService.createUser(user);
-        return ResponseEntity.ok(createdUser);
+        UserResponse response = new UserResponse(
+            createdUser.getId(),
+            createdUser.getUsername(),
+            createdUser.getEmail(),
+            createdUser.getRole()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")

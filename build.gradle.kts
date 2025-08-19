@@ -64,6 +64,9 @@ dependencies {
     // **CRITICAL FIX**: The annotation processor is required to generate mapping implementations.
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 
+    // Ensure Lombok runs before MapStruct
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+
     // --- ANNOTATION PROCESSING ---
     // Generates metadata for your custom application.properties/yml.
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

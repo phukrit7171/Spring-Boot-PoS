@@ -1,20 +1,19 @@
 package com.pos.phukrit.exceptions;
 
-import java.util.Date;
+import java.time.Instant;
 
 public class ErrorDetails {
-    private Date timestamp;
-    private String message;
-    private String details;
+    private final Instant timestamp;
+    private final String message;
+    private final String details;
 
-    public ErrorDetails(Date timestamp, String message, String details) {
-        super();
+    public ErrorDetails(Instant timestamp, String message, String details) {
         this.timestamp = timestamp;
         this.message = message;
         this.details = details;
     }
 
-    public Date getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
