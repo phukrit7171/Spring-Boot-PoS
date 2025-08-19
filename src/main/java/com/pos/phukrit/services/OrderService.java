@@ -3,8 +3,6 @@ package com.pos.phukrit.services;
 import com.pos.phukrit.models.Order;
 import com.pos.phukrit.models.OrderItem;
 import com.pos.phukrit.models.OrderStatus;
-import com.pos.phukrit.models.Product;
-import com.pos.phukrit.models.UserModel;
 import com.pos.phukrit.repositories.OrderItemRepository;
 import com.pos.phukrit.repositories.OrderRepository;
 import com.pos.phukrit.repositories.ProductRepository;
@@ -22,15 +20,6 @@ public class OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
