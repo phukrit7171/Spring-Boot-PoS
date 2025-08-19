@@ -21,4 +21,8 @@ public class Category {
     private String name;
     
     private String description;
+
+    public void setId(long l) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }
