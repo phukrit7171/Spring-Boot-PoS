@@ -7,14 +7,15 @@ This is a simple Point of Sale system built with Spring Boot.
 - User management (Admin, Staff, Customer roles)
 - Product and category management
 - Order processing
-- JWT-based authentication
+- Session-based authentication (HttpSession)
 
 ## API Endpoints
 
 ### Authentication
 
 - `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login and get JWT token
+- `POST /api/auth/login` - Login and start a session (sets JSESSIONID cookie)
+- `POST /api/auth/logout` - Logout and end the session
 
 ### Users
 
@@ -63,7 +64,18 @@ Most endpoints require authentication. To authenticate, first login using the `/
 }
 ```
 
-Then include HttpSession in the Authorization
+After login, the server sets a JSESSIONID cookie. Include this cookie in subsequent requests so your session is recognized.
+Example with curl:
+
+```bash
+# Login and store cookies
+curl -i -c cookies.txt -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password"}' \
+  http://localhost:8080/api/auth/login
+
+# Call a protected endpoint using the stored session cookie
+curl -b cookies.txt http://localhost:8080/api/users
+```
 
 ## Default Users
 
@@ -82,6 +94,12 @@ The system comes with three default users:
 ```
 
 The application will start on port 8080.
+
+## Frontend and Backend on the Same Server
+
+- The frontend is served by Spring Boot from `src/main/resources/static` and is available at: `http://localhost:8080/`.
+- Static assets and the root path are publicly accessible; API endpoints generally require authentication, except `POST /api/auth/**`.
+- For rapid development, static resource and Thymeleaf caching is disabled in `application.properties`.
 
 ## H2 Console
 

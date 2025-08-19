@@ -28,6 +28,10 @@ public class UserService {
     }
 
     public UserModel createUser(UserModel user) {
+        // Default role to CUSTOMER if not provided to avoid NPE during authentication
+        if (user.getRole() == null) {
+            user.setRole(UserRole.CUSTOMER);
+        }
         // Hash the password before saving
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
@@ -37,7 +41,10 @@ public class UserService {
         return userRepository.findById(id).map(user -> {
             user.setName(userDetails.getName());
             user.setUsername(userDetails.getUsername());
-            user.setRole(userDetails.getRole());
+            // Only update role if provided; keep existing otherwise
+            if (userDetails.getRole() != null) {
+                user.setRole(userDetails.getRole());
+            }
             // Only update password if provided
             if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
                 user.setPassword(passwordEncoder.encode(userDetails.getPassword()));

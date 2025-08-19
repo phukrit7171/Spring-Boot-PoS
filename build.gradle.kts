@@ -40,6 +40,7 @@ dependencies {
     // --- DATA & PERSISTENCE ---
     // Includes Spring Data JPA, Hibernate, and Connection Pooling (HikariCP).
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     // The H2 in-memory database is great for rapid development and testing.
     runtimeOnly("com.h2database:h2")
 
@@ -48,15 +49,7 @@ dependencies {
     // Integrates Spring Security with Thymeleaf for conditional UI rendering.
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 
-    // --- API & AUTHENTICATION (JWT) ---
-    // Modern, modular JWT support. This is a crucial update from the older, monolithic jjwt:0.9.1.
-    val jwtVersion = "0.12.5"
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:$jwtVersion")
-    implementation("io.jsonwebtoken:jjwt-api:$jwtVersion")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jwtVersion") // Or jjwt-gson if you prefer
     
-    // For JSON Schema validation, useful for ensuring data integrity from external sources.
-    implementation("com.github.fge:json-schema-validator:2.2.6")
 
     // --- DEVELOPER EXPERIENCE ---
     // Enables live reload and other development-time conveniences.
@@ -78,6 +71,7 @@ dependencies {
     // --- TESTING ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    runtimeOnly("org.springframework.boot:spring-boot-docker-compose")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

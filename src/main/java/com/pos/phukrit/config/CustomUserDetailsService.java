@@ -2,7 +2,6 @@ package com.pos.phukrit.config;
 
 import com.pos.phukrit.models.UserModel;
 import com.pos.phukrit.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -17,8 +16,11 @@ import java.util.List;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
