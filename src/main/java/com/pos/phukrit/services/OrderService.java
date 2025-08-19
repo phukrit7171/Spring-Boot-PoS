@@ -3,10 +3,7 @@ package com.pos.phukrit.services;
 import com.pos.phukrit.models.Order;
 import com.pos.phukrit.models.OrderItem;
 import com.pos.phukrit.models.OrderStatus;
-import com.pos.phukrit.repositories.OrderItemRepository;
 import com.pos.phukrit.repositories.OrderRepository;
-import com.pos.phukrit.repositories.ProductRepository;
-import com.pos.phukrit.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
