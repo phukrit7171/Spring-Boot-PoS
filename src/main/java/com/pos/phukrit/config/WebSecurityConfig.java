@@ -1,6 +1,6 @@
 package com.pos.phukrit.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -26,14 +28,17 @@ import java.util.List;
 @EnableMethodSecurity
 public class WebSecurityConfig {
 
-    @Autowired
+    @Setter
     private CustomUserDetailsService customUserDetailsService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:4200}")
     private String allowedOriginsProp;
+
+    public WebSecurityConfig(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -52,7 +57,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints for frontend and static assets
                 .requestMatchers(
@@ -72,10 +77,10 @@ public class WebSecurityConfig {
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
             )
-            .formLogin(form -> form.disable());
+            .formLogin(AbstractHttpConfigurer::disable);
 
         // Allow frames for H2 console
-        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+        http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
 
         return http.build();
     }
@@ -90,7 +95,7 @@ public class WebSecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(origins);  // Replaced deprecated setAllowedOrigins()
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         // Expose common headers if needed by frontend
         config.setExposedHeaders(Arrays.asList("Location", "Content-Disposition"));
@@ -99,4 +104,5 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
