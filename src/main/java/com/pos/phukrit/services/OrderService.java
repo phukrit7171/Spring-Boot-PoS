@@ -9,7 +9,6 @@ import com.pos.phukrit.models.OrderItemModel;
 import com.pos.phukrit.models.ProductModel;
 import com.pos.phukrit.repositories.OrderRepository;
 import com.pos.phukrit.repositories.ProductRepository; // Still need this for getting product details
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +33,7 @@ public class OrderService {
         this.productRepository = productRepository;
         this.productService = productService;
     }
-    
+
     public OrderResDto createOrder(OrderReqDto orderReqDto) {
         OrderModel order = new OrderModel();
         order.setOrderDate(LocalDateTime.now());

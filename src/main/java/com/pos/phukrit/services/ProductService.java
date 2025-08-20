@@ -5,7 +5,6 @@ import com.pos.phukrit.dtos.ProductResDto;
 import com.pos.phukrit.mappers.ProductMapper;
 import com.pos.phukrit.models.ProductModel;
 import com.pos.phukrit.repositories.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
