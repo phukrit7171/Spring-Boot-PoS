@@ -22,7 +22,6 @@ public class CustomerService {
     }
 
     public CustomerResDto createCustomer(CustomerReqDto customerReqDto) {
-        // Here you could add logic to check if the phone number already exists
         CustomerModel customerModel = customerMapper.toCustomerModel(customerReqDto);
         CustomerModel savedCustomer = customerRepository.save(customerModel);
         return customerMapper.toCustomerResDto(savedCustomer);

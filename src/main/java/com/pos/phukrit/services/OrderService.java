@@ -28,12 +28,11 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final CustomerRepository customerRepository; // Add CustomerRepository
-    private final UserRepository userRepository;         // Add UserRepository
+    private final CustomerRepository customerRepository;
+    private final UserRepository userRepository;
     private final ProductService productService;
     private final OrderMapper orderMapper = OrderMapper.INSTANCE;
 
-    // Update the constructor with new dependencies
     public OrderService(OrderRepository orderRepository,
                         ProductRepository productRepository,
                         CustomerRepository customerRepository,
@@ -47,21 +46,19 @@ public class OrderService {
     }
 
     public OrderResDto createOrder(OrderReqDto orderReqDto) {
-        // 1. Get the logged-in employee (UserModel)
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserModel employee = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Employee not found: " + username));
+                .orElse(null); // Null for anonymous/self-checkout
 
-        // 2. Find the customer if a phone number is provided
         CustomerModel customer = null;
         if (orderReqDto.getCustomerPhoneNumber() != null && !orderReqDto.getCustomerPhoneNumber().isEmpty()) {
             customer = customerRepository.findByPhoneNumber(orderReqDto.getCustomerPhoneNumber())
-                    .orElse(null); // Or throw an exception if customer must exist
+                    .orElse(null);
         }
 
         OrderModel order = new OrderModel();
-        order.setUser(employee); // Link the order to the employee
-        order.setCustomer(customer); // Link to customer (can be null)
+        order.setUser(employee);
+        order.setCustomer(customer);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderModel.OrderStatus.COMPLETED);
 
@@ -69,7 +66,6 @@ public class OrderService {
         double totalPrice = 0.0;
 
         for (OrderItemReqDto itemDto : orderReqDto.getItems()) {
-            // Delegate stock reduction to ProductService
             productService.reduceStock(itemDto.getProductId(), itemDto.getQuantity());
 
             ProductModel product = productRepository.findById(itemDto.getProductId())
@@ -88,12 +84,9 @@ public class OrderService {
         order.setItems(orderItems);
         order.setTotalPrice(totalPrice);
 
-        // 3. Award points if there is a customer
-        // (e.g., 1 point for every dollar spent)
         if (customer != null) {
             int pointsEarned = (int) Math.floor(totalPrice);
             customer.setPoints(customer.getPoints() + pointsEarned);
-            // customerRepository.save(customer) is not needed due to @Transactional
         }
 
         OrderModel savedOrder = orderRepository.save(order);

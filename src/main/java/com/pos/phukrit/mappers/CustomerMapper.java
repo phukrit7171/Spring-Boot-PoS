@@ -12,11 +12,9 @@ public interface CustomerMapper {
 
     CustomerMapper INSTANCE = Mappers.getMapper(CustomerMapper.class);
 
-    // Maps a CustomerModel to a CustomerResDto
     CustomerResDto toCustomerResDto(CustomerModel customerModel);
 
-    // Maps a CustomerReqDto to a CustomerModel
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "points", ignore = true) // Points are managed by the system
+    @Mapping(target = "points", ignore = true)
     CustomerModel toCustomerModel(CustomerReqDto customerReqDto);
 }

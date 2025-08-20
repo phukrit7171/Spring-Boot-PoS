@@ -19,8 +19,8 @@ public class CustomerModel {
 
     private String name;
 
-    @Column(unique = true) // A customer is uniquely identified by their phone number
+    @Column(unique = true)
     private String phoneNumber;
 
-    private int points = 0; // Default points to 0 for new members
+    private int points = 0;
 }

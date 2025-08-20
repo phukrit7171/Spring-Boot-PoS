@@ -8,9 +8,9 @@ import java.util.List;
 @Data
 public class OrderResDto {
     private Long id;
-    private Long userId; // Employee who made the sale
+    private Long userId;
     private String username;
-    private Long customerId; // Customer who the sale was for (optional)
+    private Long customerId;
     private String customerName;
     private LocalDateTime orderDate;
     private Double totalPrice;

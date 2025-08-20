@@ -14,8 +14,8 @@ public interface OrderMapper {
 
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "user.username", target = "username")
-    @Mapping(source = "customer.id", target = "customerId") // Map customer ID
-    @Mapping(source = "customer.name", target = "customerName") // Map customer name
+    @Mapping(source = "customer.id", target = "customerId")
+    @Mapping(source = "customer.name", target = "customerName")
     OrderResDto toOrderResDto(OrderModel orderModel);
 
     @Mapping(source = "product.id", target = "productId")

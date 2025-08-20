@@ -25,19 +25,13 @@ public class OrderModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // --- NEW RELATIONSHIP 1 ---
-    // The employee who created the order. This is a required field.
-    // For self-checkout, this could be null or linked to a generic "System" user.
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private UserModel user; // This is the EMPLOYEE
+    private UserModel user; // Employee
 
-    // --- NEW RELATIONSHIP 2 ---
-    // The customer associated with the order. This is optional.
-    // 'nullable = true' allows for guest checkouts.
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = true)
-    private CustomerModel customer; // This is the CUSTOMER
+    private CustomerModel customer; // Customer (Optional)
 
     @Column(nullable = false)
     private LocalDateTime orderDate;
