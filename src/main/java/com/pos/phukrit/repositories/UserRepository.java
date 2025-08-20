@@ -1,17 +1,13 @@
 package com.pos.phukrit.repositories;
 
-import com.pos.phukrit.models.OrderModel;
 import com.pos.phukrit.models.UserModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<OrderModel, Long> {
+public interface UserRepository extends JpaRepository<UserModel, Long> {
 
-    // Find all orders placed by a specific user
-    List<OrderModel> findByUser(UserModel user);
-
-    // Find all orders with a specific status
-    List<OrderModel> findByStatus(OrderModel.OrderStatus status);
+    Optional<UserModel> findByUsername(String username);
+    Optional<UserModel> findByEmail(String email);
 }
