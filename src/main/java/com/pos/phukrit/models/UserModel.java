@@ -12,7 +12,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "users") // This still maps to the 'users' table
+@Table(name = "users") // This table is now for EMPLOYEES
 public class UserModel {
 
     @Id
@@ -36,7 +36,6 @@ public class UserModel {
 
     public enum Role {
         ADMIN,
-        STAFF,
-        CUSTOMER
+        STAFF
     }
 }
