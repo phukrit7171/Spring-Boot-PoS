@@ -63,4 +63,9 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf(
+            "-Amapstruct.defaultComponentModel=spring"
+        ))
+    }
 }
