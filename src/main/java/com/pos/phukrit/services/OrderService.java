@@ -8,7 +8,7 @@ import com.pos.phukrit.models.OrderModel;
 import com.pos.phukrit.models.OrderItemModel;
 import com.pos.phukrit.models.ProductModel;
 import com.pos.phukrit.repositories.OrderRepository;
-import com.pos.phukrit.repositories.ProductRepository;
+import com.pos.phukrit.repositories.ProductRepository; // Still need this for getting product details
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,37 +21,41 @@ import java.util.List;
 @Transactional
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
+    private final OrderRepository orderRepository; // Field is now final
+    private final ProductRepository productRepository; // Field is now final
+    private final ProductService productService; // Field is now final
     private final OrderMapper orderMapper = OrderMapper.INSTANCE;
 
+    // All dependencies are injected via the constructor
+    public OrderService(OrderRepository orderRepository,
+                        ProductRepository productRepository,
+                        ProductService productService) {
+        this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
+        this.productService = productService;
+    }
+    
     public OrderResDto createOrder(OrderReqDto orderReqDto) {
         OrderModel order = new OrderModel();
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderModel.OrderStatus.COMPLETED); // Let's set it to COMPLETED for simplicity
+        order.setStatus(OrderModel.OrderStatus.COMPLETED);
 
         List<OrderItemModel> orderItems = new ArrayList<>();
         double totalPrice = 0.0;
 
         for (OrderItemReqDto itemDto : orderReqDto.getItems()) {
+            // --- ENHANCEMENT ---
+            // The OrderService now delegates the responsibility of stock management.
+            productService.reduceStock(itemDto.getProductId(), itemDto.getQuantity());
+
+            // We still need to fetch the product to get its name and price for the order item
             ProductModel product = productRepository.findById(itemDto.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found: " + itemDto.getProductId()));
-
-            if (product.getStock() < itemDto.getQuantity()) {
-                throw new RuntimeException("Not enough stock for: " + product.getName());
-            }
-
-            product.setStock(product.getStock() - itemDto.getQuantity());
-            // The transaction will ensure this save is committed only if the whole process succeeds
 
             OrderItemModel orderItem = new OrderItemModel();
             orderItem.setProduct(product);
             orderItem.setQuantity(itemDto.getQuantity());
-            orderItem.setPrice(product.getPrice());
+            orderItem.setPrice(product.getPrice()); // Price at time of sale
             orderItem.setOrder(order);
             orderItems.add(orderItem);
 

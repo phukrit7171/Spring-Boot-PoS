@@ -17,10 +17,13 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-
+    private final UserRepository userRepository; // Field is now final
     private final UserMapper userMapper = UserMapper.INSTANCE;
+
+    // Dependencies are injected via the constructor
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     // Get all users
     public List<UserResDto> getAllUsers() {
