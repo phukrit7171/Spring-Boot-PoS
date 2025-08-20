@@ -1,8 +1,18 @@
 package com.pos.phukrit.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,10 +25,19 @@ public class OrderModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // This is the relationship you added - perfect!
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // Can be nullable if you allow guest checkouts
-    private UserModel user;
+    // --- NEW RELATIONSHIP 1 ---
+    // The employee who created the order. This is a required field.
+    // For self-checkout, this could be null or linked to a generic "System" user.
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserModel user; // This is the EMPLOYEE
+
+    // --- NEW RELATIONSHIP 2 ---
+    // The customer associated with the order. This is optional.
+    // 'nullable = true' allows for guest checkouts.
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = true)
+    private CustomerModel customer; // This is the CUSTOMER
 
     @Column(nullable = false)
     private LocalDateTime orderDate;

@@ -1,0 +1,22 @@
+package com.pos.phukrit.mappers;
+
+import com.pos.phukrit.dtos.CustomerReqDto;
+import com.pos.phukrit.dtos.CustomerResDto;
+import com.pos.phukrit.models.CustomerModel;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+@Mapper
+public interface CustomerMapper {
+
+    CustomerMapper INSTANCE = Mappers.getMapper(CustomerMapper.class);
+
+    // Maps a CustomerModel to a CustomerResDto
+    CustomerResDto toCustomerResDto(CustomerModel customerModel);
+
+    // Maps a CustomerReqDto to a CustomerModel
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "points", ignore = true) // Points are managed by the system
+    CustomerModel toCustomerModel(CustomerReqDto customerReqDto);
+}
