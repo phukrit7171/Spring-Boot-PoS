@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pos.phukrit.models.UserModel;
-import com.pos.phukrit.repositories.UserRepository;
 
 @RestController
 @RequestMapping("/api/users")

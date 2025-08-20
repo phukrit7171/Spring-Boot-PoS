@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface UserRepository extends JpaRepository<OrderModel, Long> {
+public interface OrderRepository extends JpaRepository<OrderModel, Long> {
 
     // Find all orders placed by a specific user
     List<OrderModel> findByUser(UserModel user);
