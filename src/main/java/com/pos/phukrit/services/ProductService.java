@@ -72,4 +72,26 @@ public class ProductService {
         // the change to the 'product' object and save it to the database
         // when the transaction commits.
     }
+    // --- NEW METHOD: UPDATE ---
+    public Optional<ProductResDto> updateProduct(Long id, ProductReqDto productReqDto) {
+        return productRepository.findById(id)
+                .map(existingProduct -> {
+                    // Update the existing product's fields
+                    existingProduct.setName(productReqDto.getName());
+                    existingProduct.setDescription(productReqDto.getDescription());
+                    existingProduct.setPrice(productReqDto.getPrice());
+                    existingProduct.setStock(productReqDto.getStock());
+                    // Saving is not needed here due to @Transactional
+                    return productMapper.toProductResDto(existingProduct);
+                });
+    }
+
+    // --- NEW METHOD: DELETE ---
+    public boolean deleteProduct(Long id) {
+        if (productRepository.existsById(id)) {
+            productRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
 }

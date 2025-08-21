@@ -4,13 +4,8 @@ import com.pos.phukrit.dtos.ProductReqDto;
 import com.pos.phukrit.dtos.ProductResDto;
 import com.pos.phukrit.services.ProductService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -48,5 +43,24 @@ public class ProductController {
     @PostMapping
     public ProductResDto createProduct(@RequestBody ProductReqDto productReqDto) {
         return productService.createProduct(productReqDto);
+    }
+
+    // --- NEW ENDPOINT: UPDATE ---
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ProductResDto> updateProduct(@PathVariable Long id, @RequestBody ProductReqDto productReqDto) {
+        return productService.updateProduct(id, productReqDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- NEW ENDPOINT: DELETE ---
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        if (productService.deleteProduct(id)) {
+            return ResponseEntity.noContent().build(); // Standard 204 No Content response
+        }
+        return ResponseEntity.notFound().build();
     }
 }

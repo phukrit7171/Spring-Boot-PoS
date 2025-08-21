@@ -1,113 +1,53 @@
 # Spring Boot Point of Sale (PoS) System
 
-This is a simple Point of Sale system built with Spring Boot.
+This is a complete Point of Sale system built with Spring Boot, designed to handle real-world retail workflows including staff-operated terminals and customer self-checkout.
 
-## Features
+## Core Concepts
 
-- User management (Admin, Staff, Customer roles)
-- Product and category management
-- Order processing
-- Session-based authentication (HttpSession)
+The system is designed with a clear separation between **Employees** (Users who operate the system) and **Customers** (Loyalty members who earn points).
+
+- **Employees (`UserModel`)**: Have `username`, `password`, and `Roles` (`ADMIN`, `STAFF`). They are authenticated via Spring Security to operate the POS.
+- **Customers (`CustomerModel`)**: Are identified by `phoneNumber` and have a `points` total. They do not log in to the POS; they are looked up by staff or identify themselves at a kiosk.
 
 ## API Endpoints
 
-### Authentication
+### Authentication (`/api/auth`)
 
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login and start a session (sets JSESSIONID cookie)
-- `POST /api/auth/logout` - Logout and end the session
+- `POST /api/auth/login`: For **Employees** to log in and start a secure session.
+- `POST /api/auth/logout`: For **Employees** to log out.
 
-### Users
+### Employee Management (`/api/users`)
+*Requires `ADMIN` role for all endpoints.*
 
-- `GET /api/users` - Get all users
-- `GET /api/users/{id}` - Get user by ID
-- `POST /api/users` - Create a new user
-- `PUT /api/users/{id}` - Update user
-- `DELETE /api/users/{id}` - Delete user
+- `GET /api/users`: Get all employee accounts.
+- `GET /api/users/{id}`: Get an employee by ID.
+- `POST /api/users`: Create a new employee account.
 
-### Categories
+### Customer Management (`/api/customers`)
+*Requires `ADMIN` or `STAFF` role.*
 
-- `GET /api/categories` - Get all categories
-- `GET /api/categories/{id}` - Get category by ID
-- `POST /api/categories` - Create a new category
-- `PUT /api/categories/{id}` - Update category
-- `DELETE /api/categories/{id}` - Delete category
+- `POST /api/customers`: Create a new customer loyalty account.
+- `GET /api/customers/lookup/by-phone/{phoneNumber}`: Find a customer by their phone number.
 
-### Products
+### Product Management (`/api/products`)
 
-- `GET /api/products` - Get all products
-- `GET /api/products/{id}` - Get product by ID
-- `GET /api/products/category/{categoryId}` - Get products by category
-- `GET /api/products/search?name={name}` - Search products by name
-- `POST /api/products` - Create a new product
-- `PUT /api/products/{id}` - Update product
-- `DELETE /api/products/{id}` - Delete product
+- `GET /api/products`: Get all products.
+- `GET /api/products/{id}`: Get a product by ID.
+- `GET /api/products/search?name={name}`: Search for products by name.
+- `POST /api/products`: Create a new product. *(Requires `ADMIN` or `STAFF` role)*
+- `PUT /api/products/{id}`: Update an existing product. *(Requires `ADMIN` or `STAFF` role)*
+- `DELETE /api/products/{id}`: Delete a product. *(Requires `ADMIN` or `STAFF` role)*
 
-### Orders
+### Order Management (`/api/orders`)
 
-- `GET /api/orders` - Get all orders
-- `GET /api/orders/{id}` - Get order by ID
-- `GET /api/orders/user/{userId}` - Get orders by user
-- `GET /api/orders/status/{status}` - Get orders by status
-- `POST /api/orders` - Create a new order
-- `PUT /api/orders/{id}` - Update order
-- `DELETE /api/orders/{id}` - Delete order
-
-## Authentication Body
-
-Most endpoints require authentication. To authenticate, first login using the `/api/auth/login` endpoint:
-
-```json
-{
-  "username": "admin",
-  "password": "password"
-}
-```
-
-After login, the server sets a JSESSIONID cookie. Include this cookie in subsequent requests so your session is recognized.
-Example with curl:
-
-```bash
-# Login and store cookies
-curl -i -c cookies.txt -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"password"}' \
-  http://localhost:8080/api/auth/login
-
-# Call a protected endpoint using the stored session cookie
-curl -b cookies.txt http://localhost:8080/api/users
-```
+- `POST /api/orders`: Create a new order.
+    - Can be called by an authenticated Employee (`STAFF`, `ADMIN`).
+    - Can be called anonymously for self-checkout.
+    - The request body can include an optional `customerPhoneNumber` to link the sale to a loyalty account.
 
 ## Default Users
 
-The system comes with three default users:
+The system comes with two default employee users, created on startup:
 
-- Admin: username `admin`, password `password`
-- Staff: username `staff`, password `password`
-- Customer: Not require anything but can login if customer want to do it
-  - Customer Username : `customer`
-  - Customer Password : `password`
-
-## Running the Application
-
-```bash
-./gradlew bootRun
-```
-
-The application will start on port 8080.
-
-## Frontend and Backend on the Same Server
-
-- The frontend is served by Spring Boot from `src/main/resources/static` and is available at: `http://localhost:8080/`.
-- Static assets and the root path are publicly accessible; API endpoints generally require authentication, except `POST /api/auth/**`.
-- For rapid development, static resource and Thymeleaf caching is disabled in `application.properties`.
-
-## H2 Console
-
-You can access the H2 database console at:
-[http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-
-Use these settings:
-
-- JDBC URL: jdbc:h2:mem:testdb
-- User Name: sa
-- Password: (leave empty)
+- **Admin**: `username` = `admin`, `password` = `password`
+- **Staff**: `username` = `staff`, `password` = `password`
