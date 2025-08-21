@@ -62,10 +62,21 @@ dependencies {
     // If you want to use MapStruct with Lombok.
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
+    // --- TESTING ---
+    // This starter includes JUnit 5, Mockito, and other core testing utilities
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+    }
 
+    // NEW DEPENDENCY: Required for testing secured endpoints with @WithMockUser
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("com.microsoft.playwright:playwright:1.54.0")
     tasks.withType<JavaCompile> {
         options.compilerArgs.addAll(listOf(
             "-Amapstruct.defaultComponentModel=spring"
         ))
     }
+}
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
