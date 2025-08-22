@@ -8,11 +8,20 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpStatus;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -30,33 +39,120 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Allow credentials (cookies, authorization headers, etc.)
+        configuration.setAllowCredentials(true);
+
+        // Allow specific origins - adjust these to match your frontend URLs
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "file://*"
+        ));
+
+        // Allow all headers
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // Allow all HTTP methods
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"
+        ));
+
+        // Expose headers that the frontend might need
+        configuration.setExposedHeaders(Arrays.asList(
+                "Authorization", "Content-Type", "X-Requested-With", "X-CSRF-TOKEN"
+        ));
+
+        // Cache preflight requests for 1 hour
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                // --- FIX: Handle unauthorized API access ---
-                // For unauthenticated users trying to access protected API endpoints,
-                // return a 401 Unauthorized status code instead of redirecting to a login page.
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                // Enable CORS with the configuration above
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Configure CSRF - enable with cookie-based tokens for better frontend compatibility
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        // Disable CSRF for API endpoints to simplify frontend integration
+                        .ignoringRequestMatchers("/api/**", "/h2-console/**")
+                )
+
+                // Handle unauthorized access properly
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
+
+                // Configure authorization rules
                 .authorizeHttpRequests(auth -> auth
                         // Publicly accessible paths
-                        .requestMatchers("/", "/index.html", "/app.js", "/favicon.ico").permitAll()
-                        .requestMatchers("/h2-console/**", "/api/auth/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/app.js", "/favicon.ico", "/static/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Allow anonymous order creation for self-checkout
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
-                        // All other API requests must be authenticated
+
+                        // Allow GET requests to products for self-checkout browsing
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/search").permitAll()
+
+                        // All other API requests require authentication
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                // --- FIX: Configure session management for the API ---
-                // We add formLogin and httpBasic to ensure the security context is properly
-                // created and managed after your custom login is successful.
-                .formLogin(form -> form
-                        .successHandler((req, res, auth) -> res.setStatus(HttpStatus.OK.value()))
-                        .failureHandler((req, res, ex) -> res.setStatus(HttpStatus.UNAUTHORIZED.value()))
+
+                // Configure session management
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionConcurrency(concurrency -> concurrency
+                                .maximumSessions(10) // Allow multiple concurrent sessions
+                        )
                 )
-                .httpBasic(httpBasic -> {}) // Enable HTTP Basic Auth for API clients
+
+                // Configure form login for web-based authentication
+                .formLogin(form -> form
+                        .loginPage("/login") // This won't be used with your custom endpoint
+                        .permitAll()
+                        .successHandler((request, response, authentication) -> {
+                            response.setStatus(HttpStatus.OK.value());
+                            response.setContentType("application/json");
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            response.setContentType("application/json");
+                        })
+                )
+
+                // Enable HTTP Basic Auth as fallback
+                .httpBasic(httpBasic -> httpBasic
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
+
+                // Configure logout
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpStatus.OK.value()))
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                )
+
+                // Configure headers
                 .headers(headers -> headers
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin) // For H2 console
+                        .contentTypeOptions(contentType -> {}) // Enable content type sniffing protection
+                        .httpStrictTransportSecurity(HeadersConfigurer.HstsConfig::disable) // Disable HSTS for development
                 );
+
         return http.build();
     }
 }
