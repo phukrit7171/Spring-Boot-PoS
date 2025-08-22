@@ -595,7 +595,7 @@
         }
     }
 
-    // Enhanced fetch function with proper headers
+    // Enhanced fetch function with better error handling
     async function apiRequest(url, options = {}) {
         const defaultOptions = {
             credentials: 'include',
@@ -614,6 +614,19 @@
 
         try {
             const response = await fetch(url, finalOptions);
+
+            // If we get 401 and we think we're logged in, try to refresh session
+            if (response.status === 401 && currentUser) {
+                console.log('Session may have expired, attempting to refresh...');
+                // Try to get fresh CSRF token
+                await getCsrfToken();
+                if (csrfToken) {
+                    finalOptions.headers['X-CSRF-TOKEN'] = csrfToken;
+                    // Retry the request once
+                    return await fetch(url, finalOptions);
+                }
+            }
+
             return response;
         } catch (error) {
             console.error('API Request failed:', error);
@@ -621,8 +634,36 @@
         }
     }
 
+    // Test authentication status
+    async function testAuthentication() {
+        try {
+            const response = await apiRequest(`${API_BASE}/users`);
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+
     // Utility functions
-    function showAlert(message, type = 'success', containerId = 'loginAlert') {
+    function showAlert(message, type = 'success', containerId = null) {
+        // If no container specified, create a temporary alert
+        if (!containerId) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '300px';
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                document.body.removeChild(alertDiv);
+            }, 5000);
+            return;
+        }
+
         const alertContainer = document.getElementById(containerId);
         alertContainer.innerHTML = `
                 <div class="alert alert-${type}">
@@ -641,10 +682,11 @@
     // Authentication functions
     async function login(username, password) {
         try {
-            // First get CSRF token
+            // First get CSRF token if needed
             await getCsrfToken();
 
-            const response = await apiRequest(`${API_BASE}/auth/login`, {
+            // Try custom login endpoint first
+            let response = await apiRequest(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 body: JSON.stringify({ username, password })
             });
@@ -652,25 +694,47 @@
             if (response.ok) {
                 const userData = await response.json();
                 currentUser = userData;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('currentUser').textContent = `Welcome, ${username}`;
-
-                // Hide employee tab if not admin
-                if (userData.role !== 'ADMIN') {
-                    document.getElementById('employeesTab').style.display = 'none';
-                }
-
+                showLoginSuccess(username, userData);
                 await loadInitialData();
                 return true;
             } else {
-                const error = await response.text();
-                showAlert('Invalid credentials', 'error');
-                return false;
+                // If custom login fails, try form-based login as fallback
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                if (response.ok || response.status === 302) {
+                    // Form login successful, create user object
+                    currentUser = { username, role: username === 'admin' ? 'ADMIN' : 'STAFF' };
+                    showLoginSuccess(username, currentUser);
+                    await loadInitialData();
+                    return true;
+                } else {
+                    showAlert('Invalid credentials', 'error');
+                    return false;
+                }
             }
         } catch (error) {
+            console.error('Login error:', error);
             showAlert('Login failed: ' + error.message, 'error');
             return false;
+        }
+    }
+
+    function showLoginSuccess(username, userData) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('currentUser').textContent = `Welcome, ${username}`;
+
+        // Hide employee tab if not admin
+        if (userData.role !== 'ADMIN') {
+            document.getElementById('employeesTab').style.display = 'none';
         }
     }
 
@@ -973,6 +1037,14 @@
 
     // Product management functions
     async function createProduct(name, price, description) {
+        // First verify we're authenticated
+        const isAuthenticated = await testAuthentication();
+        if (!isAuthenticated && currentUser) {
+            showAlert('Session expired. Please log in again.', 'error');
+            logout();
+            return null;
+        }
+
         try {
             const response = await apiRequest(`${API_BASE}/products`, {
                 method: 'POST',
@@ -981,19 +1053,23 @@
 
             if (response.ok) {
                 const product = await response.json();
-                alert('Product created successfully!');
+                showAlert('Product created successfully!', 'success');
                 document.getElementById('productForm').classList.add('hidden');
                 document.getElementById('productFormElement').reset();
                 await loadProducts();
                 displayProducts();
                 return product;
+            } else if (response.status === 401) {
+                showAlert('Authentication required. Please log in again.', 'error');
+                logout();
+                return null;
             } else {
                 const error = await response.text();
-                alert('Error creating product: ' + error);
+                showAlert('Error creating product: ' + error, 'error');
                 return null;
             }
         } catch (error) {
-            alert('Error creating product: ' + error.message);
+            showAlert('Error creating product: ' + error.message, 'error');
             return null;
         }
     }
@@ -1263,6 +1339,33 @@
             await createEmployee(username, password, role);
         });
     });
+
+    // Add a debug button to test authentication
+    const debugButton = document.createElement('button');
+    debugButton.textContent = 'Debug Auth';
+    debugButton.className = 'btn btn-secondary';
+    debugButton.style.position = 'fixed';
+    debugButton.style.bottom = '20px';
+    debugButton.style.right = '20px';
+    debugButton.style.zIndex = '9999';
+    debugButton.onclick = async () => {
+        console.log('Current user:', currentUser);
+        console.log('CSRF token:', csrfToken);
+
+        try {
+            const testResponse = await apiRequest(`${API_BASE}/products`);
+            console.log('Products endpoint test:', testResponse.status);
+
+            const userResponse = await apiRequest(`${API_BASE}/users`);
+            console.log('Users endpoint test:', userResponse.status);
+
+            showAlert(`Auth Debug: Products=${testResponse.status}, Users=${userResponse.status}`, 'success');
+        } catch (error) {
+            console.error('Debug error:', error);
+            showAlert('Debug failed: ' + error.message, 'error');
+        }
+    };
+    document.body.appendChild(debugButton);
 
     // Initialize cart display
     updateCartDisplay();
