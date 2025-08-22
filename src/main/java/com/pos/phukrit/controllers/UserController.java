@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -39,5 +42,33 @@ public class UserController {
     @PostMapping
     public UserResDto createUser(@RequestBody UserReqDto userReqDto) {
         return userService.createUser(userReqDto);
+    }
+
+    // Debug endpoint to check if username exists
+    @GetMapping("/check-username/{username}")
+    public ResponseEntity<Map<String, Object>> checkUsername(@PathVariable String username) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("requested_username", username);
+        response.put("username_length", username.length());
+        response.put("username_bytes", java.util.Arrays.toString(username.getBytes()));
+        
+        List<UserResDto> allUsers = userService.getAllUsers();
+        List<Map<String, Object>> existingUsers = new ArrayList<>();
+        
+        for (UserResDto user : allUsers) {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("username", user.getUsername());
+            userInfo.put("username_length", user.getUsername().length());
+            userInfo.put("username_bytes", java.util.Arrays.toString(user.getUsername().getBytes()));
+            userInfo.put("exact_match", username.equals(user.getUsername()));
+            userInfo.put("case_insensitive_match", username.equalsIgnoreCase(user.getUsername()));
+            existingUsers.add(userInfo);
+        }
+        
+        response.put("existing_users", existingUsers);
+        response.put("username_exists", allUsers.stream().anyMatch(u -> u.getUsername().equals(username)));
+        
+        return ResponseEntity.ok(response);
     }
 }

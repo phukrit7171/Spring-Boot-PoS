@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug Tool - Spring Boot PoS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .status {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Frontend Debug Tool</h1>
+    <p>This tool helps debug frontend issues with the Spring Boot PoS API.</p>
+
+    <!-- Login Section -->
+    <div class="container">
+        <h2>1. Authentication Test</h2>
+        <div class="form-group">
+            <label>Username:</label>
+            <input type="text" id="loginUsername" value="admin">
+        </div>
+        <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="loginPassword" value="password">
+        </div>
+        <button onclick="login()">🔐 Login</button>
+        <button onclick="checkSession()" class="secondary">📋 Check Session</button>
+        <button onclick="logout()" class="secondary">🚪 Logout</button>
+        <div id="loginResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- User Creation Test -->
+    <div class="container">
+        <h2>2. User Creation Test</h2>
+        <div class="form-group">
+            <label>Name:</label>
+            <input type="text" id="userName" value="Test Employee">
+        </div>
+        <div class="form-group">
+            <label>Username:</label>
+            <input type="text" id="userUsername" value="testuser123">
+        </div>
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="userEmail" value="test@example.com">
+        </div>
+        <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="userPassword" value="testpass">
+        </div>
+        <div class="form-group">
+            <label>Role:</label>
+            <select id="userRole">
+                <option value="STAFF">STAFF</option>
+                <option value="ADMIN">ADMIN</option>
+            </select>
+        </div>
+        <button onclick="testUserCreation()">🧪 Debug Test User Creation</button>
+        <button onclick="createUser()">👤 Actually Create User</button>
+        <button onclick="checkUsername()" class="secondary">🔍 Check Username</button>
+        <div id="userResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- CORS Test -->
+    <div class="container">
+        <h2>3. CORS & Connection Test</h2>
+        <button onclick="testCors()">🌐 Test CORS</button>
+        <button onclick="listUsers()" class="secondary">📋 List All Users</button>
+        <div id="corsResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // Helper function to make API calls
+        async function apiCall(url, options = {}) {
+            const defaultOptions = {
+                credentials: 'include', // IMPORTANT: This sends cookies
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            };
+            
+            const response = await fetch(url, { ...defaultOptions, ...options });
+            const text = await response.text();
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                data = text;
+            }
+            
+            return {
+                ok: response.ok,
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries()),
+                data: data
+            };
+        }
+        
+        // Show result in UI
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = result.ok ? 'result success' : 'result error';
+            
+            const statusClass = result.ok ? 'success' : 'error';
+            element.innerHTML = `
+                <div class="status">Status: ${result.status} ${result.statusText}</div>
+                <div><strong>Response:</strong></div>
+                ${JSON.stringify(result.data, null, 2)}
+                <div style="margin-top:10px;"><strong>Headers:</strong></div>
+                ${JSON.stringify(result.headers, null, 2)}
+            `;
+        }
+        
+        // Login function
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const result = await apiCall(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                showResult('loginResult', result);
+            } catch (error) {
+                showResult('loginResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // Check session
+        async function checkSession() {
+            try {
+                const result = await apiCall(`${API_BASE}/debug/session-info`);
+                showResult('loginResult', result);
+            } catch (error) {
+                showResult('loginResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // Logout function
+        async function logout() {
+            try {
+                const result = await apiCall(`${API_BASE}/auth/logout`, {
+                    method: 'POST'
+                });
+                showResult('loginResult', result);
+            } catch (error) {
+                showResult('loginResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // Test user creation (debug)
+        async function testUserCreation() {
+            const userData = {
+                name: document.getElementById('userName').value,
+                username: document.getElementById('userUsername').value,
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPassword').value,
+                role: document.getElementById('userRole').value
+            };
+            
+            try {
+                const result = await apiCall(`${API_BASE}/debug/test-user-creation`, {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+                showResult('userResult', result);
+            } catch (error) {
+                showResult('userResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // Actually create user
+        async function createUser() {
+            const userData = {
+                name: document.getElementById('userName').value,
+                username: document.getElementById('userUsername').value,
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPassword').value,
+                role: document.getElementById('userRole').value
+            };
+            
+            try {
+                const result = await apiCall(`${API_BASE}/users`, {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+                showResult('userResult', result);
+            } catch (error) {
+                showResult('userResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // Check username
+        async function checkUsername() {
+            const username = document.getElementById('userUsername').value;
+            
+            try {
+                const result = await apiCall(`${API_BASE}/users/check-username/${encodeURIComponent(username)}`);
+                showResult('userResult', result);
+            } catch (error) {
+                showResult('userResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // Test CORS
+        async function testCors() {
+            try {
+                const result = await apiCall(`${API_BASE}/debug/cors-test`);
+                showResult('corsResult', result);
+            } catch (error) {
+                showResult('corsResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+        
+        // List users
+        async function listUsers() {
+            try {
+                const result = await apiCall(`${API_BASE}/users`);
+                showResult('corsResult', result);
+            } catch (error) {
+                showResult('corsResult', {
+                    ok: false,
+                    status: 'ERROR',
+                    statusText: 'Network Error',
+                    data: error.message,
+                    headers: {}
+                });
+            }
+        }
+    </script>
+</body>
+</html>

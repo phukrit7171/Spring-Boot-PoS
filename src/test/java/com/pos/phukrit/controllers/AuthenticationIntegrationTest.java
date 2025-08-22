@@ -146,4 +146,104 @@ public class AuthenticationIntegrationTest {
 
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
+
+    @Test
+    public void testDuplicateUsernameReturnsConflict() {
+        String baseUrl = "http://localhost:" + port;
+        
+        // Login as admin first
+        LoginReqDto loginRequest = new LoginReqDto();
+        loginRequest.setUsername("admin");
+        loginRequest.setPassword("password");
+
+        HttpHeaders loginHeaders = new HttpHeaders();
+        loginHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<LoginReqDto> loginEntity = new HttpEntity<>(loginRequest, loginHeaders);
+
+        ResponseEntity<LoginResDto> loginResponse = restTemplate.exchange(
+                baseUrl + "/api/auth/login", 
+                HttpMethod.POST, 
+                loginEntity, 
+                LoginResDto.class);
+
+        assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        
+        // Extract session cookie
+        List<String> cookies = loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
+        assertThat(cookies).isNotNull().isNotEmpty();
+        
+        String sessionCookie = cookies.stream()
+                .filter(cookie -> cookie.startsWith("JSESSIONID"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No JSESSIONID cookie found"));
+
+        // Try to create user with duplicate username
+        String duplicateUserJson = "{\"name\":\"Duplicate User\",\"username\":\"admin\",\"email\":\"new@example.com\",\"password\":\"testpass\",\"role\":\"STAFF\"}";
+        
+        HttpHeaders userHeaders = new HttpHeaders();
+        userHeaders.setContentType(MediaType.APPLICATION_JSON);
+        userHeaders.set(HttpHeaders.COOKIE, sessionCookie);
+        HttpEntity<String> userEntity = new HttpEntity<>(duplicateUserJson, userHeaders);
+
+        ResponseEntity<String> userResponse = restTemplate.exchange(
+                baseUrl + "/api/users", 
+                HttpMethod.POST, 
+                userEntity, 
+                String.class);
+
+        // Should return 409 Conflict with proper error message
+        assertThat(userResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(userResponse.getBody()).contains("Username already exists");
+        assertThat(userResponse.getBody()).contains("field");
+        assertThat(userResponse.getBody()).contains("username");
+    }
+
+    @Test
+    public void testDuplicateEmailReturnsConflict() {
+        String baseUrl = "http://localhost:" + port;
+        
+        // Login as admin first
+        LoginReqDto loginRequest = new LoginReqDto();
+        loginRequest.setUsername("admin");
+        loginRequest.setPassword("password");
+
+        HttpHeaders loginHeaders = new HttpHeaders();
+        loginHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<LoginReqDto> loginEntity = new HttpEntity<>(loginRequest, loginHeaders);
+
+        ResponseEntity<LoginResDto> loginResponse = restTemplate.exchange(
+                baseUrl + "/api/auth/login", 
+                HttpMethod.POST, 
+                loginEntity, 
+                LoginResDto.class);
+
+        assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        
+        // Extract session cookie
+        List<String> cookies = loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
+        assertThat(cookies).isNotNull().isNotEmpty();
+        
+        String sessionCookie = cookies.stream()
+                .filter(cookie -> cookie.startsWith("JSESSIONID"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No JSESSIONID cookie found"));
+
+        // Try to create user with duplicate email
+        String duplicateEmailJson = "{\"name\":\"New User\",\"username\":\"newuser\",\"email\":\"admin@example.com\",\"password\":\"testpass\",\"role\":\"STAFF\"}";
+        
+        HttpHeaders userHeaders = new HttpHeaders();
+        userHeaders.setContentType(MediaType.APPLICATION_JSON);
+        userHeaders.set(HttpHeaders.COOKIE, sessionCookie);
+        HttpEntity<String> userEntity = new HttpEntity<>(duplicateEmailJson, userHeaders);
+
+        ResponseEntity<String> userResponse = restTemplate.exchange(
+                baseUrl + "/api/users", 
+                HttpMethod.POST, 
+                userEntity, 
+                String.class);
+
+        // Should return 409 Conflict with proper error message
+        assertThat(userResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(userResponse.getBody()).contains("already exists");
+    }
 }
