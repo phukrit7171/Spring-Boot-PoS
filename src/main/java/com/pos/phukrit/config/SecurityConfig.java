@@ -151,6 +151,13 @@ public class SecurityConfig {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin) // For H2 console
                         .contentTypeOptions(contentType -> {}) // Enable content type sniffing protection
                         .httpStrictTransportSecurity(HeadersConfigurer.HstsConfig::disable) // Disable HSTS for development
+                )
+
+                // IMPORTANT: Enable auto-save of SecurityContext to session
+                // This ensures that when SecurityContextHolder.getContext().setAuthentication() 
+                // is called in controllers, the authentication is automatically persisted to the session
+                .securityContext(context -> context
+                        .requireExplicitSave(false)   // auto-save SecurityContext changes to session
                 );
 
         return http.build();
