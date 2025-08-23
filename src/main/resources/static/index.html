@@ -438,6 +438,15 @@
                                 <input type="number" id="productPrice" step="0.01" min="0" required>
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productStock">Stock</label>
+                                <input type="number" id="productStock" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <!-- Empty div to maintain grid structure -->
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label for="productDescription">Description</label>
                             <textarea id="productDescription" rows="3"></textarea>
@@ -529,8 +538,18 @@
                     <form id="employeeFormElement">
                         <div class="form-row">
                             <div class="form-group">
+                                <label for="employeeName">Name</label>
+                                <input type="text" id="employeeName" required>
+                            </div>
+                            <div class="form-group">
                                 <label for="employeeUsername">Username</label>
                                 <input type="text" id="employeeUsername" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="employeeEmail">Email</label>
+                                <input type="email" id="employeeEmail" required>
                             </div>
                             <div class="form-group">
                                 <label for="employeePassword">Password</label>
@@ -1036,7 +1055,7 @@
     }
 
     // Product management functions
-    async function createProduct(name, price, description) {
+    async function createProduct(name, price, description, stock) {
         // First verify we're authenticated
         const isAuthenticated = await testAuthentication();
         if (!isAuthenticated && currentUser) {
@@ -1048,7 +1067,7 @@
         try {
             const response = await apiRequest(`${API_BASE}/products`, {
                 method: 'POST',
-                body: JSON.stringify({ name, price, description })
+                body: JSON.stringify({ name, price, description, stock })
             });
 
             if (response.ok) {
@@ -1074,11 +1093,11 @@
         }
     }
 
-    async function updateProduct(id, name, price, description) {
+    async function updateProduct(id, name, price, description, stock) {
         try {
             const response = await apiRequest(`${API_BASE}/products/${id}`, {
                 method: 'PUT',
-                body: JSON.stringify({ name, price, description })
+                body: JSON.stringify({ name, price, description, stock })
             });
 
             if (response.ok) {
@@ -1128,17 +1147,19 @@
         document.getElementById('productId').value = product.id;
         document.getElementById('productName').value = product.name;
         document.getElementById('productPrice').value = product.price;
+        document.getElementById('productStock').value = product.stock;
         document.getElementById('productDescription').value = product.description || '';
         document.getElementById('productFormTitle').textContent = 'Edit Product';
         document.getElementById('productForm').classList.remove('hidden');
     }
 
     // Employee management functions
-    async function createEmployee(username, password, role) {
+    async function createEmployee(name, username, email, password, role) {
+        console.log('Creating employee with data:', { name, username, email, password, role });
         try {
             const response = await apiRequest(`${API_BASE}/users`, {
                 method: 'POST',
-                body: JSON.stringify({ username, password, role })
+                body: JSON.stringify({ name, username, email, password, role })
             });
 
             if (response.ok) {
@@ -1286,12 +1307,18 @@
             const id = document.getElementById('productId').value;
             const name = document.getElementById('productName').value;
             const price = parseFloat(document.getElementById('productPrice').value);
+            const stock = parseInt(document.getElementById('productStock').value);
             const description = document.getElementById('productDescription').value;
 
+            if (!name || !price || !stock) {
+                showAlert('Please fill in all required fields.', 'error');
+                return;
+            }
+
             if (id) {
-                await updateProduct(id, name, price, description);
+                await updateProduct(id, name, price, description, stock);
             } else {
-                await createProduct(name, price, description);
+                await createProduct(name, price, description, stock);
             }
         });
 
@@ -1310,6 +1337,12 @@
             e.preventDefault();
             const name = document.getElementById('customerNameInput').value;
             const phoneNumber = document.getElementById('customerPhoneInput').value;
+
+            if (!name || !phoneNumber) {
+                showAlert('Please fill in all required fields.', 'error');
+                return;
+            }
+
             await createCustomer(name, phoneNumber);
         });
 
@@ -1333,10 +1366,18 @@
 
         document.getElementById('employeeFormElement').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const name = document.getElementById('employeeName').value;
             const username = document.getElementById('employeeUsername').value;
+            const email = document.getElementById('employeeEmail').value;
             const password = document.getElementById('employeePassword').value;
             const role = document.getElementById('employeeRole').value;
-            await createEmployee(username, password, role);
+
+            if (!name || !username || !email || !password || !role) {
+                showAlert('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            await createEmployee(name, username, email, password, role);
         });
     });
 

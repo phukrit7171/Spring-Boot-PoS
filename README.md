@@ -17,11 +17,13 @@ The system is designed with a clear separation between **Employees** (Users who 
 - `POST /api/auth/logout`: For **Employees** to log out.
 
 ### Employee Management (`/api/users`)
-*Requires `ADMIN` role for all endpoints.*
+*Requires `ADMIN` role for all endpoints, except `DELETE` which also allows `STAFF`.*
 
 - `GET /api/users`: Get all employee accounts.
 - `GET /api/users/{id}`: Get an employee by ID.
 - `POST /api/users`: Create a new employee account.
+- `PUT /api/users/{id}`: Update an existing employee account.
+- `DELETE /api/users/{id}`: Delete an employee account. *(Requires `ADMIN` or `STAFF` role)*
 
 ### Customer Management (`/api/customers`)
 *Requires `ADMIN` or `STAFF` role.*
@@ -34,14 +36,14 @@ The system is designed with a clear separation between **Employees** (Users who 
 - `GET /api/products`: Get all products.
 - `GET /api/products/{id}`: Get a product by ID.
 - `GET /api/products/search?name={name}`: Search for products by name.
-- `POST /api/products`: Create a new product. *(Requires `ADMIN` or `STAFF` role)*
+- `POST /api/products`: Create a new product.
 - `PUT /api/products/{id}`: Update an existing product. *(Requires `ADMIN` or `STAFF` role)*
 - `DELETE /api/products/{id}`: Delete a product. *(Requires `ADMIN` or `STAFF` role)*
 
 ### Order Management (`/api/orders`)
 
 - `POST /api/orders`: Create a new order.
-    - Can be called by an authenticated Employee (`STAFF`, `ADMIN`).
+    - Can be called by an authenticated Employee (`STA.FF`, `ADMIN`).
     - Can be called anonymously for self-checkout.
     - The request body can include an optional `customerPhoneNumber` to link the sale to a loyalty account.
 

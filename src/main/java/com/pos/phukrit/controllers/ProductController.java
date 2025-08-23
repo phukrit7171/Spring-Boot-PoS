@@ -6,7 +6,7 @@ import com.pos.phukrit.services.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -41,14 +41,14 @@ public class ProductController {
 
     // POST /api/products - Create a new product
     @PostMapping
-    public ProductResDto createProduct(@RequestBody ProductReqDto productReqDto) {
+    public ProductResDto createProduct(@Valid @RequestBody ProductReqDto productReqDto) {
         return productService.createProduct(productReqDto);
     }
 
     // --- NEW ENDPOINT: UPDATE ---
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<ProductResDto> updateProduct(@PathVariable Long id, @RequestBody ProductReqDto productReqDto) {
+    public ResponseEntity<ProductResDto> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductReqDto productReqDto) {
         return productService.updateProduct(id, productReqDto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

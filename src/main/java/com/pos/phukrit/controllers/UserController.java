@@ -5,12 +5,15 @@ import com.pos.phukrit.dtos.UserResDto;
 import com.pos.phukrit.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,8 +43,17 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResDto createUser(@RequestBody UserReqDto userReqDto) {
+    public UserResDto createUser(@Valid @RequestBody UserReqDto userReqDto) {
         return userService.createUser(userReqDto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserReqDto userReqDto) {
+        UserResDto updatedUser = userService.updateUser(id, userReqDto);
+        if (updatedUser != null) {
+            return ResponseEntity.ok(updatedUser);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     // Debug endpoint to check if username exists
@@ -71,4 +83,13 @@ public class UserController {
         
         return ResponseEntity.ok(response);
     }
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        if (userService.deleteUser(id)) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+    
 }
