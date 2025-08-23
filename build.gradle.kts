@@ -45,6 +45,7 @@ dependencies {
     // --- DEVELOPER EXPERIENCE ---
     // Enables live reload and other development-time conveniences.
     developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.10")
 
     // Reduces boilerplate code (getters, setters, etc.).
 	compileOnly("org.projectlombok:lombok:1.18.38")

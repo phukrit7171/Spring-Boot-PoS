@@ -83,7 +83,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         // Disable CSRF for API endpoints to simplify frontend integration
-                        .ignoringRequestMatchers("/api/**", "/h2-console/**")
+                        .ignoringRequestMatchers("/api/**", "/h2-console/**","/v3/api-docs/**","/swagger-ui/**")
                 )
 
                 // Handle unauthorized access properly
@@ -97,6 +97,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index.html", "/app.js", "/favicon.ico", "/static/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**","/swagger-ui/**").permitAll()
 
                         // Allow anonymous order creation for self-checkout
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
