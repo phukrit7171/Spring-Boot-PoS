@@ -102,9 +102,9 @@ const response = await axios.get('/api/users', {
 - `GET /api/users/{id}` - Get user by ID
 - `POST /api/users` - Create new user
 - `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
 
 #### ADMIN or STAFF
-- `DELETE /api/users/{id}` - Delete user
 - `PUT /api/products/{id}` - Update product
 - `DELETE /api/products/{id}` - Delete product
 - Most other API endpoints

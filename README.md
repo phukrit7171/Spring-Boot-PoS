@@ -17,13 +17,13 @@ The system is designed with a clear separation between **Employees** (Users who 
 - `POST /api/auth/logout`: For **Employees** to log out.
 
 ### Employee Management (`/api/users`)
-*Requires `ADMIN` role for all endpoints, except `DELETE` which also allows `STAFF`.*
+*Requires `ADMIN` role for all endpoints.*
 
 - `GET /api/users`: Get all employee accounts.
 - `GET /api/users/{id}`: Get an employee by ID.
 - `POST /api/users`: Create a new employee account.
 - `PUT /api/users/{id}`: Update an existing employee account.
-- `DELETE /api/users/{id}`: Delete an employee account. *(Requires `ADMIN` or `STAFF` role)*
+- `DELETE /api/users/{id}`: Delete an employee account.
 
 ### Customer Management (`/api/customers`)
 *Requires `ADMIN` or `STAFF` role.*
